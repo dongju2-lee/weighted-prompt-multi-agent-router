@@ -46,39 +46,34 @@ The Weighted Prompt Multi-Agent Router solves these problems by:
 ## 🏗️ System Architecture
 
 ```mermaid
-graph TB
-    A[User Query] --> B[Query Embedding]
-    B --> C[Vector Database Search]
-    C --> D[Historical Pattern Analysis]
-    D --> E[Base Ratio Calculation]
-    E --> F[Weight Application]
-    F --> G[Ratio Normalization]
-    G --> H[Enhanced Supervisor Prompt]
-    H --> I[Supervisor Agent]
-    I --> J[Selected Agent]
-    J --> K[Response Generation]
-    K --> L[Metadata Logging]
-    L --> M[Vector Database Update]
+flowchart TD
+    A["🧑‍💻 User Query<br/>음식 추천해줘"] --> B["🔤 Query Embedding<br/>Vector Conversion"]
+    B --> C["🗄️ Vector Database<br/>Search Similar Queries"]
+    C --> D["📊 Pattern Analysis<br/>Calculate Agent Ratios"]
+    D --> E["⚖️ Apply Weights<br/>Adjust Ratios"]
+    E --> F["📝 Enhanced Prompt<br/>Historical Data + Ratios"]
+    F --> G["🤖 Supervisor Agent<br/>Final Routing Decision"]
     
-    N[Weight Configuration API] --> F
-    O[Monitoring System] --> L
+    G --> H1["🥘 Refrigerator Agent"]
+    G --> H2["🍽️ Restaurant Agent"] 
+    G --> H3["📖 Recipe Agent"]
+    G --> H4["🥗 Health Agent"]
     
-    subgraph "Vector Database"
-        C
-        M
-    end
+    H1 --> I["📤 Response Generation"]
+    H2 --> I
+    H3 --> I
+    H4 --> I
     
-    subgraph "Multi-Agent System"
-        P[Refrigerator Recipe Agent]
-        Q[Restaurant Recommendation Agent]
-        R[Recipe Search Agent]
-        S[Health Food Consulting Agent]
-    end
+    I --> J["📝 Metadata Logging"]
+    J --> C
     
-    I --> P
-    I --> Q
-    I --> R
-    I --> S
+    K["⚙️ Weight API<br/>Real-time Control"] --> E
+    L["📈 Monitoring<br/>Performance Tracking"] --> J
+
+    style A fill:#e1f5fe
+    style G fill:#fff3e0
+    style I fill:#f3e5f5
+    style K fill:#e8f5e8
 ```
 
 ## 🔄 System Flow
