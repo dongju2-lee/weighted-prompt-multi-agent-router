@@ -6,7 +6,8 @@
 
 > **🚀 공지사항:** 실제 테스트 기반 결과 및 성능 벤치마크를 곧 공개할 예정입니다!  
 > **📅 연구 공개일:** 2025년 6월 26일  
-> **👨‍💻 주요 연구자:** [@dongju2-lee](https://github.com/dongju2-lee)  
+> **💡 아이디어 제안자:** [@dongju2-lee](https://github.com/dongju2-lee)  
+> **👥 연구 기여자들:** [@dongju2-lee](https://github.com/dongju2-lee), [@kenokim](https://github.com/kenokim), [@kwnsrnjs12](https://github.com/kwnsrnjs12), [@lsmman](https://github.com/lsmman), [@ubibio](https://github.com/ubibio)  
 > **🔬 연구 현황:** 진행 중 - 테스트 결과 및 구현 내용이 지속적으로 업데이트됩니다
 
 [한국어 README](./README_KOR.md) | [English README](./README.md)
@@ -185,8 +186,13 @@ agent_weights = {
 
 ## 🔬 연구팀
 
-- **주요 연구자**: [@dongju2-lee](https://github.com/dongju2-lee)
-- **기여자들**: *[연구 협력자가 참여하는 대로 업데이트 예정]*
+- **아이디어 제안자**: [@dongju2-lee](https://github.com/dongju2-lee)
+- **연구 기여자들**:
+  - [@dongju2-lee](https://github.com/dongju2-lee)
+  - [@kenokim](https://github.com/kenokim)
+  - [@kwnsrnjs12](https://github.com/kwnsrnjs12)
+  - [@lsmman](https://github.com/lsmman)
+  - [@ubibio](https://github.com/ubibio)
 
 ## 📈 모니터링 및 분석
 

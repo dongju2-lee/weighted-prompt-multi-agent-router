@@ -6,7 +6,8 @@
 
 > **🚀 ANNOUNCEMENT:** Real-world test results and performance benchmarks will be published soon!  
 > **📅 Research Publication Date:** June 26, 2025  
-> **👨‍💻 Lead Researcher:** [@dongju2-lee](https://github.com/dongju2-lee)  
+> **💡 Idea Originator:** [@dongju2-lee](https://github.com/dongju2-lee)  
+> **👥 Research Contributors:** [@dongju2-lee](https://github.com/dongju2-lee), [@kenokim](https://github.com/kenokim), [@kwnsrnjs12](https://github.com/kwnsrnjs12), [@lsmman](https://github.com/lsmman), [@ubibio](https://github.com/ubibio)  
 > **🔬 Research Status:** Ongoing - Test results and implementations are continuously updated
 
 [한국어 README](./README_KOR.md) | [English README](./README.md)
@@ -185,8 +186,13 @@ agent_weights = {
 
 ## 🔬 Research Team
 
-- **Lead Researcher**: [@dongju2-lee](https://github.com/dongju2-lee)
-- **Contributors**: *[To be updated as collaborators join the research]*
+- **Idea Originator**: [@dongju2-lee](https://github.com/dongju2-lee)
+- **Research Contributors**:
+  - [@dongju2-lee](https://github.com/dongju2-lee)
+  - [@kenokim](https://github.com/kenokim)
+  - [@kwnsrnjs12](https://github.com/kwnsrnjs12)
+  - [@lsmman](https://github.com/lsmman)
+  - [@ubibio](https://github.com/ubibio)
 
 ## 📈 Monitoring & Analytics
 
