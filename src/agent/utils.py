@@ -1,5 +1,5 @@
 """
-유틸리티 함수 모듈 (음식 추천 에이전트 버전)
+유틸리티 함수 모듈 (운동 추천 에이전트 버전)
 """
 import os
 import re
@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import vertexai
 from vertexai.generative_models import GenerativeModel
 from langfuse import Langfuse
+from google.cloud import aiplatform
 
 # 환경 변수 로드
 load_dotenv()
@@ -42,80 +43,119 @@ def initialize_langfuse() -> tuple[Optional[Langfuse], Optional[Any]]:
         return None, None
 
 
-def initialize_gemini_model() -> GenerativeModel:
-    """
-    Vertex AI Gemini 모델 초기화
-    """
-    global _cached_gemini_model
-    
-    if _cached_gemini_model is not None:
-        return _cached_gemini_model
-    
-    project_id = os.getenv("GCP_PROJECT_ID")
-    location = os.getenv("GCP_VERTEXAI_LOCATION", "us-central1")
-    model_name = os.getenv("SUPERVISOR_MODEL", "gemini-2.0-flash")
-    
-    if not project_id:
-        raise ValueError("GCP_PROJECT_ID 환경변수가 설정되지 않았습니다.")
-    
-    # Vertex AI 초기화
-    vertexai.init(project=project_id, location=location)
-    
-    # 모델 초기화
-    _cached_gemini_model = GenerativeModel(model_name)
-    
-    return _cached_gemini_model
+def initialize_vertexai():
+    """Vertex AI 초기화"""
+    try:
+        project_id = os.getenv("GCP_PROJECT_ID")
+        location = os.getenv("GCP_VERTEXAI_LOCATION", "us-central1")
+        
+        if not project_id:
+            raise ValueError("GCP_PROJECT_ID 환경변수가 설정되지 않았습니다.")
+        
+        # Vertex AI 초기화
+        vertexai.init(project=project_id, location=location)
+        print(f"✅ Vertex AI 초기화 완료 (Project: {project_id}, Location: {location})")
+        
+        return project_id, location
+    except Exception as e:
+        print(f"❌ Vertex AI 초기화 실패: {e}")
+        raise
 
 
-def extract_agent_name(gemini_response: str) -> str:
+def initialize_gemini_model():
+    """Gemini 모델 초기화"""
+    try:
+        # Vertex AI 초기화
+        initialize_vertexai()
+        
+        # Gemini 2.0 Flash 모델 초기화
+        model = GenerativeModel("gemini-2.0-flash-exp")
+        print("✅ Gemini 2.0 Flash 모델 초기화 완료")
+        
+        return model
+    except Exception as e:
+        print(f"❌ Gemini 모델 초기화 실패: {e}")
+        raise
+
+
+def extract_agent_name(llm_response: str) -> str:
     """
-    Gemini 응답에서 에이전트 이름 추출 (음식 추천 에이전트)
+    LLM 응답에서 에이전트 이름 추출 (운동 추천 에이전트)
     """
-    # 음식 에이전트 목록
-    food_agents = [
-        "냉장고_재료_에이전트",
-        "음식점_추천_에이전트", 
-        "레시피_검색_에이전트",
-        "건강식_컨설팅_에이전트"
+    # 운동 에이전트 이름들
+    sports_agents = [
+        "축구_에이전트",
+        "농구_에이전트", 
+        "야구_에이전트",
+        "테니스_에이전트"
     ]
     
-    response_lower = gemini_response.lower()
+    # 응답 텍스트를 소문자로 변환
+    response_lower = llm_response.lower()
     
-    # 1. 정확한 에이전트명 매칭
-    for agent in food_agents:
-        if agent in gemini_response:
+    # 각 에이전트 이름이 응답에 포함되어 있는지 확인
+    for agent in sports_agents:
+        if agent.lower() in response_lower:
             return agent
     
-    # 2. 키워드 기반 매칭
-    if any(keyword in response_lower for keyword in ["냉장고", "재료", "집", "간단"]):
-        return "냉장고_재료_에이전트"
-    elif any(keyword in response_lower for keyword in ["음식점", "맛집", "외식", "데이트"]):
-        return "음식점_추천_에이전트"
-    elif any(keyword in response_lower for keyword in ["레시피", "요리법", "만들기", "조리"]):
-        return "레시피_검색_에이전트"
-    elif any(keyword in response_lower for keyword in ["건강", "다이어트", "칼로리", "영양"]):
-        return "건강식_컨설팅_에이전트"
+    # 정규표현식으로 "선택된 에이전트:" 패턴 찾기
+    agent_pattern = r"선택된\s*에이전트\s*:\s*([가-힣_]+)"
+    match = re.search(agent_pattern, llm_response)
+    if match:
+        extracted_agent = match.group(1).strip()
+        # 추출된 에이전트가 유효한지 확인
+        for agent in sports_agents:
+            if agent == extracted_agent:
+                return agent
     
-    # 3. 기본값
-    return "냉장고_재료_에이전트"
+    # 키워드 기반 백업 매칭
+    if any(keyword in response_lower for keyword in ["축구", "풋살", "킥", "골"]):
+        return "축구_에이전트"
+    elif any(keyword in response_lower for keyword in ["농구", "농구장", "슛", "3점"]):
+        return "농구_에이전트"
+    elif any(keyword in response_lower for keyword in ["야구", "배팅", "타격", "홈런"]):
+        return "야구_에이전트"
+    elif any(keyword in response_lower for keyword in ["테니스", "라켓", "서브", "코트"]):
+        return "테니스_에이전트"
+    
+    # 기본값
+    return "축구_에이전트"
 
 
-def validate_environment() -> bool:
+def format_percentage(value: float) -> str:
+    """소수를 백분율로 포맷팅"""
+    return f"{value * 100:.1f}%"
+
+
+def validate_environment():
     """환경 변수 검증"""
-    project_id = os.getenv("GCP_PROJECT_ID")
-    if not project_id:
-        print("\n❌ 오류: GCP_PROJECT_ID 환경변수가 설정되지 않았습니다.")
-        print("🔧 해결 방법:")
-        print("1. .env 파일을 생성하고 다음을 추가하세요:")
-        print("   GCP_PROJECT_ID=your-gcp-project-id")
-        print("   GCP_VERTEXAI_LOCATION=us-central1")
-        print("2. 또는 환경변수를 직접 설정하세요:")
-        print("   export GCP_PROJECT_ID=your-gcp-project-id")
+    required_vars = ["GCP_PROJECT_ID"]
+    missing_vars = []
+    
+    for var in required_vars:
+        if not os.getenv(var):
+            missing_vars.append(var)
+    
+    if missing_vars:
+        print(f"❌ 다음 환경 변수가 설정되지 않았습니다: {', '.join(missing_vars)}")
+        print("📝 .env 파일에 다음 변수들을 설정해주세요:")
+        for var in missing_vars:
+            if var == "GCP_PROJECT_ID":
+                print(f"   {var}=your-gcp-project-id")
+            elif var == "GCP_VERTEXAI_LOCATION":
+                print(f"   {var}=us-central1")
         return False
     
-    print(f"✅ Google Cloud 프로젝트: {project_id}")
-    print(f"✅ Vertex AI 위치: {os.getenv('GCP_VERTEXAI_LOCATION', 'us-central1')}")
     return True
+
+
+def get_system_info():
+    """시스템 정보 반환"""
+    return {
+        "model": "Vertex AI Gemini 2.0 Flash",
+        "agents": ["축구_에이전트", "농구_에이전트", "야구_에이전트", "테니스_에이전트"],
+        "features": ["가중치 기반 라우팅", "과거 패턴 분석", "실시간 A/B 테스트"]
+    }
 
 
 def print_detailed_result(result: Dict[str, Any]):

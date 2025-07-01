@@ -1,15 +1,15 @@
 """
-LangGraph 그래프 정의 모듈 (음식 추천 에이전트 버전)
+LangGraph 워크플로우 정의 (운동 추천 에이전트 버전)
 """
-from langgraph.graph import StateGraph
+from langgraph.graph import StateGraph, END
 from .nodes import (
     AgentState,
     supervisor_node,
-    refrigerator_node,
-    restaurant_node,
-    recipe_node,
-    health_node,
-    decide_next_agent
+    soccer_node,
+    basketball_node,
+    baseball_node,
+    tennis_node,
+    should_continue
 )
 
 # Langfuse observe decorator import
@@ -25,74 +25,79 @@ except ImportError:
         return decorator
 
 
-def create_food_recommendation_graph():
-    """
-    음식 추천 멀티 에이전트 그래프 생성
-    """
-    # StateGraph 생성
-    graph = StateGraph(AgentState)
+def create_sports_agent_graph():
+    """운동 추천 멀티 에이전트 그래프 생성"""
+    
+    # StateGraph 생성 (AgentState 타입 지정)
+    workflow = StateGraph(AgentState)
     
     # 노드 추가
-    graph.add_node("supervisor", supervisor_node)
-    graph.add_node("refrigerator_agent", refrigerator_node)
-    graph.add_node("restaurant_agent", restaurant_node)
-    graph.add_node("recipe_agent", recipe_node)
-    graph.add_node("health_agent", health_node)
+    workflow.add_node("supervisor", supervisor_node)
+    workflow.add_node("soccer", soccer_node)
+    workflow.add_node("basketball", basketball_node)
+    workflow.add_node("baseball", baseball_node)
+    workflow.add_node("tennis", tennis_node)
     
-    # 엣지 추가
-    graph.set_entry_point("supervisor")
+    # 시작점 설정
+    workflow.set_entry_point("supervisor")
     
-    # 슈퍼바이저에서 각 에이전트로의 조건부 엣지
-    graph.add_conditional_edges(
+    # 조건부 엣지 추가 (슈퍼바이저 → 각 에이전트)
+    workflow.add_conditional_edges(
         "supervisor",
-        decide_next_agent,
+        should_continue,
         {
-            "refrigerator_agent": "refrigerator_agent",
-            "restaurant_agent": "restaurant_agent", 
-            "recipe_agent": "recipe_agent",
-            "health_agent": "health_agent"
+            "soccer": "soccer",
+            "basketball": "basketball",
+            "baseball": "baseball",
+            "tennis": "tennis"
         }
     )
     
-    # 각 에이전트에서 END로
-    graph.add_edge("refrigerator_agent", "__end__")
-    graph.add_edge("restaurant_agent", "__end__")
-    graph.add_edge("recipe_agent", "__end__")
-    graph.add_edge("health_agent", "__end__")
+    # 각 에이전트에서 END로 가는 엣지
+    workflow.add_edge("soccer", END)
+    workflow.add_edge("basketball", END)
+    workflow.add_edge("baseball", END)
+    workflow.add_edge("tennis", END)
     
-    return graph.compile()
+    # 그래프 컴파일
+    app = workflow.compile()
+    
+    return app
 
 
 @observe(name="multi_agent_system") if LANGFUSE_AVAILABLE else lambda x: x
-async def run_multi_agent_system_async(user_query: str):
-    """
-    비동기 멀티 에이전트 시스템 실행
-    """
-    app = create_food_recommendation_graph()
-    
-    # 초기 상태 설정
-    initial_state = {
-        "messages": [],
-        "user_query": user_query,
-        "selected_agent": None,
-        "routing_info": {},
-        "final_response": {}
-    }
-    
+async def run_sports_agent_workflow(user_query: str):
+    """운동 추천 워크플로우 실행"""
     try:
-        # 그래프 비동기 실행
+        # 그래프 생성
+        app = create_sports_agent_graph()
+        
+        # 초기 상태 설정 (딕셔너리로 설정)
+        initial_state = {
+            "messages": [],
+            "user_query": user_query,
+            "selected_agent": "",
+            "agent_response": {},
+            "routing_info": {}
+        }
+        
+        # 워크플로우 실행
         result = await app.ainvoke(initial_state)
-        return result
+        
+        return {
+            "success": True,
+            "user_query": user_query,
+            "selected_agent": result["selected_agent"],
+            "agent_response": result["agent_response"],
+            "routing_info": result["routing_info"]
+        }
         
     except Exception as e:
-        print(f"❌ 시스템 실행 중 오류 발생: {e}")
+        print(f"❌ 워크플로우 실행 오류: {e}")
         return {
+            "success": False,
             "error": str(e),
-            "final_response": {
-                "agent": "오류",
-                "response": "시스템 오류가 발생했습니다. 다시 시도해주세요.",
-                "confidence": 0.0
-            }
+            "user_query": user_query
         }
 
 
@@ -109,8 +114,8 @@ def run_multi_agent_system(user_query: str):
         # 새로운 스레드에서 실행
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(asyncio.run, run_multi_agent_system_async(user_query))
+            future = executor.submit(asyncio.run, run_sports_agent_workflow(user_query))
             return future.result()
     except RuntimeError:
         # 이벤트 루프가 없는 경우
-        return asyncio.run(run_multi_agent_system_async(user_query)) 
+        return asyncio.run(run_sports_agent_workflow(user_query)) 

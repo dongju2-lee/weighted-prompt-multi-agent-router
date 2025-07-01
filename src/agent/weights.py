@@ -1,43 +1,28 @@
 """
-가중치 기반 라우팅 모듈 (음식 추천 버전)
+가중치 기반 라우팅 모듈 (운동 추천 버전)
 """
 import random
 from typing import Dict
 
 def get_mock_routing_data(user_query: str) -> tuple[Dict[str, float], int]:
     """
-    과거 패턴을 모방한 Mock 데이터 생성 (음식 추천 에이전트 버전)
+    과거 패턴을 모방한 Mock 데이터 생성 (운동 추천 에이전트 버전)
     """
-    # 음식 관련 키워드 기반 패턴 시뮬레이션
-    food_keywords = {
-        "냉장고": ["냉장고", "집", "재료", "남은", "간단", "빨리"],
-        "음식점": ["맛집", "음식점", "외식", "데이트", "추천", "근처"],
-        "레시피": ["레시피", "만들기", "요리법", "조리", "만드는법"],
-        "건강식": ["다이어트", "건강", "칼로리", "영양", "살빼기", "운동"]
+    # 운동 관련 키워드 기반 패턴 시뮬레이션
+    sports_keywords = {
+        "축구": ["축구", "풋살", "킥", "골", "패스", "드리블"],
+        "농구": ["농구", "농구장", "슛", "드리블", "3점", "자유투"],
+        "야구": ["야구", "배팅", "타격", "캐치볼", "홈런", "투구"],
+        "테니스": ["테니스", "라켓", "서브", "발리", "코트", "레슨"]
     }
     
-    # 기본 분포 (약간의 랜덤성 추가)
+    # 기본 분포 
     base_ratios = {
-        "냉장고_재료_에이전트": 0.25 + random.uniform(-0.05, 0.05),
-        "음식점_추천_에이전트": 0.25 + random.uniform(-0.05, 0.05),
-        "레시피_검색_에이전트": 0.25 + random.uniform(-0.05, 0.05),
-        "건강식_컨설팅_에이전트": 0.25 + random.uniform(-0.05, 0.05)
+        "축구_에이전트": 0.25 ,
+        "농구_에이전트": 0.25 ,
+        "야구_에이전트": 0.25 ,
+        "테니스_에이전트": 0.25 
     }
-    
-    # 키워드 기반 가중치 조정
-    query_lower = user_query.lower()
-    for agent_key, keywords in food_keywords.items():
-        for keyword in keywords:
-            if keyword in query_lower:
-                if agent_key == "냉장고":
-                    base_ratios["냉장고_재료_에이전트"] += 0.15
-                elif agent_key == "음식점":
-                    base_ratios["음식점_추천_에이전트"] += 0.15
-                elif agent_key == "레시피":
-                    base_ratios["레시피_검색_에이전트"] += 0.15
-                elif agent_key == "건강식":
-                    base_ratios["건강식_컨설팅_에이전트"] += 0.15
-                break
     
     # 정규화
     total = sum(base_ratios.values())
@@ -50,13 +35,13 @@ def get_mock_routing_data(user_query: str) -> tuple[Dict[str, float], int]:
 
 def get_default_agent_weights() -> Dict[str, float]:
     """
-    기본 에이전트 가중치 반환 (음식 추천 에이전트)
+    기본 에이전트 가중치 반환 (운동 추천 에이전트)
     """
     return {
-        "냉장고_재료_에이전트": 1.0,
-        "음식점_추천_에이전트": 1.0,
-        "레시피_검색_에이전트": 1.0,
-        "건강식_컨설팅_에이전트": 1.2
+        "축구_에이전트": 1.0,
+        "농구_에이전트": 1.0,
+        "야구_에이전트": 1.0,
+        "테니스_에이전트": 1.2
     }
 
 def apply_weights_and_normalize(base_ratios: Dict[str, float], weights: Dict[str, float]) -> Dict[str, float]:
@@ -77,29 +62,29 @@ def apply_weights_and_normalize(base_ratios: Dict[str, float], weights: Dict[str
 
 def get_ab_test_weights(test_variant: str = "default") -> Dict[str, float]:
     """A/B 테스트용 가중치 설정"""
-    if test_variant == "health_focus":
-        # 건강식 에이전트 강화
+    if test_variant == "soccer_focus":
+        # 축구 에이전트 강화
         return {
-            "냉장고_재료_에이전트": 0.8,
-            "음식점_추천_에이전트": 0.8,
-            "레시피_검색_에이전트": 0.9,
-            "건강식_컨설팅_에이전트": 1.5
+            "축구_에이전트": 1.5,
+            "농구_에이전트": 0.8,
+            "야구_에이전트": 0.8,
+            "테니스_에이전트": 0.9
         }
-    elif test_variant == "recipe_focus":
-        # 레시피 에이전트 강화
+    elif test_variant == "basketball_focus":
+        # 농구 에이전트 강화
         return {
-            "냉장고_재료_에이전트": 1.1,
-            "음식점_추천_에이전트": 0.8,
-            "레시피_검색_에이전트": 1.4,
-            "건강식_컨설팅_에이전트": 0.9
+            "축구_에이전트": 0.8,
+            "농구_에이전트": 1.4,
+            "야구_에이전트": 0.9,
+            "테니스_에이전트": 0.9
         }
-    elif test_variant == "restaurant_focus":
-        # 음식점 추천 에이전트 강화
+    elif test_variant == "baseball_focus":
+        # 야구 에이전트 강화
         return {
-            "냉장고_재료_에이전트": 0.8,
-            "음식점_추천_에이전트": 1.4,
-            "레시피_검색_에이전트": 0.9,
-            "건강식_컨설팅_에이전트": 0.9
+            "축구_에이전트": 0.8,
+            "농구_에이전트": 0.9,
+            "야구_에이전트": 1.4,
+            "테니스_에이전트": 0.9
         }
     else:
         # 기본 설정
@@ -126,7 +111,7 @@ def simple_supervisor_routing(user_query: str, agent_weights: Dict[str, float] =
     weights = list(normalized_ratios.values())
     
     if not agents:
-        return "냉장고_재료_에이전트"  # 기본 에이전트
+        return "축구_에이전트"  # 기본 에이전트
     
     # 확률적 선택
     selected_agent = random.choices(agents, weights=weights, k=1)[0]

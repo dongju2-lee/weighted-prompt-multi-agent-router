@@ -1,43 +1,43 @@
 """
-음식 추천 에이전트 함수 모듈
+운동 추천 에이전트 함수 모듈
 """
 
-def refrigerator_recipe_agent(user_query: str) -> dict:
+def soccer_agent(user_query: str) -> dict:
     """
-    냉장고 재료 기반 레시피 에이전트: 집에 있는 재료로 요리 추천
+    축구 에이전트: 축구 관련 추천 및 정보 제공
     """
     return {
-        "agent": "냉장고_재료_에이전트",
-        "answer": f"집에 있는 재료로 만들 수 있는 요리를 추천해드릴게요! 김치볶음밥이나 계란후라이는 어떠세요?",
-        "detail": "냉장고에 있는 기본 재료들로 간단하고 맛있는 요리를 만들 수 있습니다."
+        "agent": "축구_에이전트",
+        "answer": f"축구를 추천해드릴게요! 근처 축구장에서 풋살이나 축구 경기는 어떠세요?",
+        "detail": "축구장 정보, 팀 매칭, 축구 용품 추천 등 축구 관련 모든 정보를 제공합니다."
     }
 
-def restaurant_recommendation_agent(user_query: str) -> dict:
+def basketball_agent(user_query: str) -> dict:
     """
-    음식점 추천 에이전트: 외식 장소 추천
+    농구 에이전트: 농구 관련 추천 및 정보 제공
     """
     return {
-        "agent": "음식점_추천_에이전트",
-        "answer": f"맛있는 음식점을 추천해드릴게요! 근처 한식당이나 이탈리안 레스토랑은 어떠세요?",
-        "detail": "지역별 맛집 정보와 리뷰를 바탕으로 최적의 외식 장소를 추천해드립니다."
+        "agent": "농구_에이전트",
+        "answer": f"농구를 추천해드릴게요! 농구장에서 3대3이나 자유투 연습은 어떠세요?",
+        "detail": "농구장 정보, 팀 구성, 농구 기술 연습법 등 농구 관련 정보를 제공합니다."
     }
 
-def recipe_search_agent(user_query: str) -> dict:
+def baseball_agent(user_query: str) -> dict:
     """
-    레시피 검색 에이전트: 상세한 요리법 제공
+    야구 에이전트: 야구 관련 추천 및 정보 제공
     """
     return {
-        "agent": "레시피_검색_에이전트",
-        "answer": f"자세한 레시피를 알려드릴게요! 단계별로 따라하시면 맛있는 요리를 만들 수 있어요.",
-        "detail": "재료 준비부터 조리 과정까지 상세한 레시피를 제공합니다."
+        "agent": "야구_에이전트",
+        "answer": f"야구를 추천해드릴게요! 타격장에서 배팅 연습이나 캐치볼은 어떠세요?",
+        "detail": "야구장 정보, 팀 가입, 야구 기술 향상법 등 야구 관련 정보를 제공합니다."
     }
 
-def health_food_consulting_agent(user_query: str) -> dict:
+def tennis_agent(user_query: str) -> dict:
     """
-    건강식 컨설팅 에이전트: 건강과 다이어트를 고려한 음식 추천
+    테니스 에이전트: 테니스 관련 추천 및 정보 제공
     """
     return {
-        "agent": "건강식_컨설팅_에이전트",
-        "answer": f"건강한 식단을 추천해드릴게요! 저칼로리 샐러드나 단백질이 풍부한 닭가슴살 요리는 어떠세요?",
-        "detail": "영양 균형과 칼로리를 고려한 건강한 식단을 제안합니다."
+        "agent": "테니스_에이전트",
+        "answer": f"테니스를 추천해드릴게요! 테니스장에서 레슨이나 경기는 어떠세요?",
+        "detail": "테니스장 예약, 레슨 정보, 파트너 매칭 등 테니스 관련 정보를 제공합니다."
     } 
