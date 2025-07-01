@@ -1,6 +1,8 @@
-langgraph>=0.4.0
-langchain==0.3.26
-langchain-google-vertexai>=0.1.0
+# Google Cloud Vertex AI
+google-cloud-aiplatform>=1.45.0
+
+# 환경 변수 관리
 python-dotenv>=1.0.0
-typing-extensions>=4.0.0
-google-cloud-aiplatform>=1.36.0 
+
+# 기본 라이브러리 (Python 3.8+ 호환)
+typing-extensions>=4.0.0 
