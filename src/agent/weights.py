@@ -1,64 +1,195 @@
 """
-가중치 기반 라우팅 모듈 (운동 추천 버전)
+가중치 및 라우팅 패턴 관리 모듈 (운동 추천 에이전트 버전)
 """
-import random
-from typing import Dict
+import json
+import os
+from datetime import datetime
+from typing import Dict, List, Tuple
+from collections import defaultdict
 
-def get_mock_routing_data(user_query: str) -> tuple[Dict[str, float], int]:
-    """
-    과거 패턴을 모방한 Mock 데이터 생성 (운동 추천 에이전트 버전)
-    """
-    # 운동 관련 키워드 기반 패턴 시뮬레이션
-    sports_keywords = {
-        "축구": ["축구", "풋살", "킥", "골", "패스", "드리블"],
-        "농구": ["농구", "농구장", "슛", "드리블", "3점", "자유투"],
-        "야구": ["야구", "배팅", "타격", "캐치볼", "홈런", "투구"],
-        "테니스": ["테니스", "라켓", "서브", "발리", "코트", "레슨"]
+
+# 선택 이력 파일 경로
+ROUTING_HISTORY_FILE = "routing_history.json"
+
+
+def load_routing_history() -> List[Dict]:
+    """선택 이력 로드"""
+    if not os.path.exists(ROUTING_HISTORY_FILE):
+        return []
+    
+    try:
+        with open(ROUTING_HISTORY_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        print("⚠️ 선택 이력 파일을 읽을 수 없어 새로 시작합니다.")
+        return []
+
+
+def save_routing_choice(user_query: str, selected_agent: str, confidence: float, reason: str):
+    """선택 결과를 이력에 저장"""
+    history = load_routing_history()
+    
+    new_record = {
+        "timestamp": datetime.now().isoformat(),
+        "user_query": user_query,
+        "selected_agent": selected_agent,
+        "confidence": confidence,
+        "reason": reason
     }
     
-    # 기본 분포 
-    base_ratios = {
-        "축구_에이전트": 0.25 ,
-        "농구_에이전트": 0.25 ,
-        "야구_에이전트": 0.25 ,
-        "테니스_에이전트": 0.25 
+    history.append(new_record)
+    
+    # 최근 1000개만 유지 (메모리 관리)
+    if len(history) > 1000:
+        history = history[-1000:]
+    
+    try:
+        with open(ROUTING_HISTORY_FILE, 'w', encoding='utf-8') as f:
+            json.dump(history, f, ensure_ascii=False, indent=2)
+        print(f"✅ 선택 이력 저장 완료: {selected_agent} (총 {len(history)}개)")
+    except Exception as e:
+        print(f"❌ 선택 이력 저장 실패: {e}")
+
+
+def get_real_routing_patterns() -> Tuple[Dict[str, float], int]:
+    """실제 선택 이력에서 패턴 계산"""
+    history = load_routing_history()
+    
+    if not history:
+        print("📊 선택 이력이 없어 기본 패턴을 사용합니다.")
+        return get_mock_routing_data("기본")
+    
+    # 에이전트별 선택 횟수 계산
+    agent_counts = defaultdict(int)
+    total_count = len(history)
+    
+    for record in history:
+        agent_counts[record["selected_agent"]] += 1
+    
+    # 비율 계산
+    agent_ratios = {}
+    sports_agents = ["축구_에이전트", "농구_에이전트", "야구_에이전트", "테니스_에이전트"]
+    
+    for agent in sports_agents:
+        agent_ratios[agent] = agent_counts[agent] / total_count if total_count > 0 else 0.0
+    
+    print(f"📊 실제 패턴 (총 {total_count}회):")
+    for agent, ratio in agent_ratios.items():
+        count = agent_counts[agent]
+        print(f"   {agent}: {ratio:.1%} ({count}회)")
+    
+    return agent_ratios, total_count
+
+
+def get_routing_data_with_history(user_query: str) -> Tuple[Dict[str, float], int]:
+    """
+    선택 이력이 있으면 실제 패턴, 없으면 mock 데이터 반환
+    """
+    history = load_routing_history()
+    
+    if len(history) >= 5:  # 최소 5개 이력이 있으면 실제 패턴 사용
+        return get_real_routing_patterns()
+    else:
+        print(f"📊 이력이 부족해 mock 데이터 사용 (현재: {len(history)}개, 필요: 5개)")
+        return get_mock_routing_data(user_query)
+
+
+def get_mock_routing_data(user_query: str) -> Tuple[Dict[str, float], int]:
+    """
+    Mock 과거 라우팅 패턴 데이터 생성 (운동 추천 에이전트 버전)
+    """
+    import random
+    
+    # 기본 패턴들
+    patterns = {
+        "균등": {"축구_에이전트": 0.25, "농구_에이전트": 0.25, "야구_에이전트": 0.25, "테니스_에이전트": 0.25},
+        "축구선호": {"축구_에이전트": 0.4, "농구_에이전트": 0.2, "야구_에이전트": 0.2, "테니스_에이전트": 0.2},
+        "구기선호": {"축구_에이전트": 0.35, "농구_에이전트": 0.35, "야구_에이전트": 0.15, "테니스_에이전트": 0.15},
+        "라켓선호": {"축구_에이전트": 0.2, "농구_에이전트": 0.2, "야구_에이전트": 0.25, "테니스_에이전트": 0.35}
     }
     
-    # 정규화
-    total = sum(base_ratios.values())
-    base_ratios = {k: v/total for k, v in base_ratios.items()}
+    # 질문 키워드에 따른 패턴 선택
+    query_lower = user_query.lower()
+    if any(word in query_lower for word in ["축구", "킥", "풋살"]):
+        base_ratios = patterns["축구선호"]
+    elif any(word in query_lower for word in ["농구", "슛", "3점"]):
+        base_ratios = patterns["구기선호"]
+    elif any(word in query_lower for word in ["야구", "배팅", "홈런"]):
+        base_ratios = patterns["구기선호"]
+    elif any(word in query_lower for word in ["테니스", "라켓", "서브"]):
+        base_ratios = patterns["라켓선호"]
+    else:
+        base_ratios = patterns["균등"]
     
-    # 과거 패턴 시뮬레이션 (총 추적 수)
-    total_traces = random.randint(50, 200)
+    # 가상 총 추적 횟수
+    total_traces = random.randint(80, 200)
     
     return base_ratios, total_traces
 
+
 def get_default_agent_weights() -> Dict[str, float]:
-    """
-    기본 에이전트 가중치 반환 (운동 추천 에이전트)
-    """
-    return {
-        "축구_에이전트": 1.0,
-        "농구_에이전트": 0.0,
-        "야구_에이전트": 1.0,
-        "테니스_에이전트": 0.0
-    }
+    """환경변수에서 에이전트 가중치 로드"""
+    sports_agents = ["축구_에이전트", "농구_에이전트", "야구_에이전트", "테니스_에이전트"]
+    weights = {}
+    
+    for agent in sports_agents:
+        # 환경변수에서 가중치 읽기 (기본값: 1.0)
+        env_key = f"WEIGHT_{agent}"
+        try:
+            weight_value = float(os.getenv(env_key, "1.0"))
+            weights[agent] = weight_value
+        except (ValueError, TypeError):
+            print(f"⚠️ {env_key} 환경변수가 잘못된 형태입니다. 기본값 1.0을 사용합니다.")
+            weights[agent] = 1.0
+    
+    print(f"📊 현재 에이전트 가중치:")
+    for agent, weight in weights.items():
+        print(f"   {agent}: {weight}")
+    
+    return weights
+
 
 def apply_weights_and_normalize(base_ratios: Dict[str, float], weights: Dict[str, float]) -> Dict[str, float]:
-    """
-    가중치를 적용하고 정규화
-    """
+    """가중치 적용 및 정규화"""
     weighted_ratios = {}
-    for agent, ratio in base_ratios.items():
+    for agent, base_ratio in base_ratios.items():
         weight = weights.get(agent, 1.0)
-        weighted_ratios[agent] = ratio * weight
+        weighted_ratios[agent] = base_ratio * weight
     
     # 정규화
     total = sum(weighted_ratios.values())
     if total > 0:
-        weighted_ratios = {k: v/total for k, v in weighted_ratios.items()}
+        for agent in weighted_ratios:
+            weighted_ratios[agent] /= total
     
     return weighted_ratios
+
+
+def get_routing_statistics() -> Dict:
+    """라우팅 통계 반환"""
+    history = load_routing_history()
+    
+    if not history:
+        return {"total_requests": 0, "agents": {}}
+    
+    agent_stats = defaultdict(lambda: {"count": 0, "avg_confidence": 0.0})
+    total_count = len(history)
+    
+    for record in history:
+        agent = record["selected_agent"]
+        agent_stats[agent]["count"] += 1
+        agent_stats[agent]["avg_confidence"] += record.get("confidence", 0.0)
+    
+    # 평균 확신도 계산
+    for agent in agent_stats:
+        if agent_stats[agent]["count"] > 0:
+            agent_stats[agent]["avg_confidence"] /= agent_stats[agent]["count"]
+        agent_stats[agent]["percentage"] = agent_stats[agent]["count"] / total_count * 100
+    
+    return {
+        "total_requests": total_count,
+        "agents": dict(agent_stats)
+    }
 
 def get_ab_test_weights(test_variant: str = "default") -> Dict[str, float]:
     """A/B 테스트용 가중치 설정"""

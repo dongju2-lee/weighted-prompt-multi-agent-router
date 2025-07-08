@@ -6,9 +6,9 @@ from typing import Dict, Any, Annotated
 from typing_extensions import TypedDict
 from langgraph.graph.message import add_messages
 from .agents import soccer_agent, basketball_agent, baseball_agent, tennis_agent
-from .weights import get_mock_routing_data, get_default_agent_weights, apply_weights_and_normalize
+from .weights import get_routing_data_with_history, get_default_agent_weights, apply_weights_and_normalize, save_routing_choice
 from .prompts import generate_supervisor_prompt
-from .utils import initialize_gemini_model, extract_agent_name
+from .utils import initialize_gemini_model, AgentSelection
 
 
 class AgentState(TypedDict):
@@ -22,11 +22,11 @@ class AgentState(TypedDict):
 
 async def supervisor_node(state: AgentState) -> Dict[str, Any]:
     """
-    슈퍼바이저 노드: Gemini를 통해 적절한 에이전트 선택
+    슈퍼바이저 노드: Gemini를 통해 적절한 에이전트 선택 (Structured Output + 실제 이력)
     """
     try:
-        # 과거 패턴 데이터 생성
-        base_ratios, total_traces = get_mock_routing_data(state["user_query"])
+        # 실제 과거 패턴 데이터 또는 mock 데이터 사용
+        base_ratios, total_traces = get_routing_data_with_history(state["user_query"])
         
         # 가중치 적용
         agent_weights = get_default_agent_weights()
@@ -46,42 +46,87 @@ async def supervisor_node(state: AgentState) -> Dict[str, Any]:
         print(supervisor_prompt)
         print(f"{'='*60}")
         
-        # Gemini 모델 호출
+        # ChatVertexAI 모델 초기화 및 구조화된 출력 설정
         model = initialize_gemini_model()
+        structured_model = model.with_structured_output(AgentSelection)
         
-        # 비동기 처리를 위해 executor 사용
-        loop = asyncio.get_event_loop()
-        gemini_response = await loop.run_in_executor(
-            None,
-            lambda: model.generate_content(supervisor_prompt).text
+        # 최대 3번 시도
+        max_attempts = 3
+        agent_selection = None
+        
+        for attempt in range(1, max_attempts + 1):
+            print(f"\n🤖 Gemini 시도 {attempt}/{max_attempts}")
+            
+            try:
+                # 비동기 처리를 위해 executor 사용
+                loop = asyncio.get_event_loop()
+                agent_selection = await loop.run_in_executor(
+                    None,
+                    lambda: structured_model.invoke(supervisor_prompt)
+                )
+                
+                print(f"\n📝 Gemini 구조화된 응답:")
+                print(f"   선택된 에이전트: {agent_selection.selected_agent}")
+                print(f"   선택 이유: {agent_selection.reason}")
+                print(f"   확신도: {agent_selection.confidence:.2f}")
+                
+                print(f"\n✅ 성공적으로 에이전트 선택: {agent_selection.selected_agent}")
+                break
+                
+            except Exception as e:
+                print(f"\n❌ 시도 {attempt} 실패: {e}")
+                if attempt == max_attempts:
+                    print(f"\n💥 모든 시도 실패. 축구_에이전트로 폴백합니다.")
+                    # 폴백용 AgentSelection 객체 생성
+                    agent_selection = AgentSelection(
+                        selected_agent="축구_에이전트",
+                        reason="모든 시도 실패로 인한 기본 선택",
+                        confidence=0.5
+                    )
+                    break
+                else:
+                    print(f"   🔄 {max_attempts - attempt}번 더 시도합니다...")
+        
+        # 🔄 선택 결과를 이력에 저장 (핵심!)
+        save_routing_choice(
+            user_query=state["user_query"],
+            selected_agent=agent_selection.selected_agent,
+            confidence=agent_selection.confidence,
+            reason=agent_selection.reason
         )
-        
-        # 에이전트 이름 추출
-        selected_agent = extract_agent_name(gemini_response)
         
         # 라우팅 정보
         routing_info = {
             "normalized_ratios": normalized_ratios,
             "total_traces": total_traces,
-            "gemini_response": gemini_response,
-            "agent_weights": agent_weights
+            "gemini_response": {
+                "selected_agent": agent_selection.selected_agent,
+                "reason": agent_selection.reason,
+                "confidence": agent_selection.confidence
+            },
+            "agent_weights": agent_weights,
+            "attempts_made": attempt,
+            "using_real_history": total_traces >= 5  # 실제 이력 사용 여부
         }
         
-        print(f"\n🤖 Gemini 슈퍼바이저 분석:")
-        print(f"   선택된 에이전트: {selected_agent}")
+        print(f"\n🎯 최종 선택된 에이전트: {agent_selection.selected_agent}")
+        print(f"   선택 이유: {agent_selection.reason}")
+        print(f"   확신도: {agent_selection.confidence:.2f}")
+        print(f"   시도 횟수: {attempt}/{max_attempts}")
         print(f"   참고 데이터: {total_traces}회")
+        print(f"   🔄 선택 결과가 패턴에 반영됩니다!")
         
         return {
-            "selected_agent": selected_agent,
+            "selected_agent": agent_selection.selected_agent,
             "routing_info": routing_info
         }
         
     except Exception as e:
-        print(f"❌ 슈퍼바이저 노드 오류: {e}")
+        print(f"❌ 슈퍼바이저 노드 치명적 오류: {e}")
         # 기본 에이전트로 폴백
         return {
             "selected_agent": "축구_에이전트",
-            "routing_info": {"error": str(e)}
+            "routing_info": {"error": str(e), "fallback": True}
         }
 
 

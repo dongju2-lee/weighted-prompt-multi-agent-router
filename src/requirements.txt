@@ -1,6 +1,21 @@
 # Google Cloud Vertex AI
 google-cloud-aiplatform>=1.45.0
 
+# LangChain
+langchain-google-vertexai>=2.0.0
+langchain-core>=0.3.0
+langgraph>=0.2.0
+
+# FastAPI
+fastapi>=0.104.0
+uvicorn>=0.24.0
+
+# 데이터 모델
+pydantic>=2.0.0
+
+# 추적 및 모니터링
+langfuse>=2.0.0
+
 # 환경 변수 관리
 python-dotenv>=1.0.0
  
