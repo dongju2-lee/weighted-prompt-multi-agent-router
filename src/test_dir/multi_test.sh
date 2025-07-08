@@ -5,8 +5,8 @@
 
 API_URL="http://localhost:8000/sports-agent-route"
 TEST_QUERY="운동하구 싶다"
-TOTAL_TESTS=10
-CONCURRENT_JOBS=5  # 동시 실행할 프로세스 수
+TOTAL_TESTS=100
+CONCURRENT_JOBS=20  # 동시 실행할 프로세스 수
 OUTPUT_DIR="test_results_$(date +%Y%m%d_%H%M%S)"
 
 echo "🏃 운동 추천 시스템 멀티프로세스 테스트 시작"
