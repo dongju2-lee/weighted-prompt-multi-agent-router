@@ -3,6 +3,6 @@ google-cloud-aiplatform>=1.45.0
 
 # 환경 변수 관리
 python-dotenv>=1.0.0
-
+ 
 # 기본 라이브러리 (Python 3.8+ 호환)
 typing-extensions>=4.0.0 

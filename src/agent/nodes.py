@@ -39,6 +39,13 @@ async def supervisor_node(state: AgentState) -> Dict[str, Any]:
             total_traces
         )
         
+        # 매번 프롬프트 출력
+        print(f"\n{'='*60}")
+        print("🔍 SUPERVISOR PROMPT")
+        print(f"{'='*60}")
+        print(supervisor_prompt)
+        print(f"{'='*60}")
+        
         # Gemini 모델 호출
         model = initialize_gemini_model()
         
@@ -111,13 +118,13 @@ async def basketball_node(state: AgentState) -> Dict[str, Any]:
         return {"agent_response": response}
     except Exception as e:
         print(f"❌ 농구 에이전트 오류: {e}")
-        return {
+    return {
             "agent_response": {
                 "agent": "농구_에이전트",
                 "answer": "죄송합니다. 농구 추천 중 오류가 발생했습니다.",
                 "detail": "시스템 오류로 인해 정상적인 추천을 제공할 수 없습니다."
-            }
         }
+    }
 
 
 async def baseball_node(state: AgentState) -> Dict[str, Any]:
@@ -132,13 +139,13 @@ async def baseball_node(state: AgentState) -> Dict[str, Any]:
         return {"agent_response": response}
     except Exception as e:
         print(f"❌ 야구 에이전트 오류: {e}")
-        return {
+    return {
             "agent_response": {
                 "agent": "야구_에이전트",
                 "answer": "죄송합니다. 야구 추천 중 오류가 발생했습니다.",
                 "detail": "시스템 오류로 인해 정상적인 추천을 제공할 수 없습니다."
-            }
         }
+    }
 
 
 async def tennis_node(state: AgentState) -> Dict[str, Any]:
@@ -153,13 +160,13 @@ async def tennis_node(state: AgentState) -> Dict[str, Any]:
         return {"agent_response": response}
     except Exception as e:
         print(f"❌ 테니스 에이전트 오류: {e}")
-        return {
+    return {
             "agent_response": {
                 "agent": "테니스_에이전트",
                 "answer": "죄송합니다. 테니스 추천 중 오류가 발생했습니다.",
                 "detail": "시스템 오류로 인해 정상적인 추천을 제공할 수 없습니다."
-            }
         }
+    }
 
 
 def should_continue(state: AgentState) -> str:

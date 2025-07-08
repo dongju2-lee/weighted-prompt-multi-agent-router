@@ -1,0 +1,1 @@
+curl -X POST http://localhost:8000/sports-agent-route -H "Content-Type: application/json" -d '{"query": "운동하고싶어"}'

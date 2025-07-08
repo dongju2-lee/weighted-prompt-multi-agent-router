@@ -90,35 +90,53 @@ def extract_agent_name(llm_response: str) -> str:
         "테니스_에이전트"
     ]
     
-    # 응답 텍스트를 소문자로 변환
-    response_lower = llm_response.lower()
+    print(f"🔍 extract_agent_name 디버그:")
+    print(f"   입력 텍스트: {llm_response[:200]}...")
     
-    # 각 에이전트 이름이 응답에 포함되어 있는지 확인
-    for agent in sports_agents:
-        if agent.lower() in response_lower:
-            return agent
-    
-    # 정규표현식으로 "선택된 에이전트:" 패턴 찾기
+    # 1. 먼저 정규표현식으로 "선택된 에이전트:" 패턴 찾기 (가장 정확한 방법)
     agent_pattern = r"선택된\s*에이전트\s*:\s*([가-힣_]+)"
     match = re.search(agent_pattern, llm_response)
     if match:
         extracted_agent = match.group(1).strip()
+        print(f"   정규표현식 매칭 결과: {extracted_agent}")
         # 추출된 에이전트가 유효한지 확인
         for agent in sports_agents:
             if agent == extracted_agent:
+                print(f"   ✅ 정규표현식으로 선택: {agent}")
                 return agent
+        print(f"   ❌ 정규표현식 결과가 유효하지 않음: {extracted_agent}")
+    else:
+        print(f"   ❌ 정규표현식 매칭 실패")
     
-    # 키워드 기반 백업 매칭
+    # 2. 정규표현식이 실패했을 때만 에이전트 이름 포함 여부 확인
+    response_lower = llm_response.lower()
+    found_agents = []
+    for agent in sports_agents:
+        if agent.lower() in response_lower:
+            found_agents.append(agent)
+    
+    if found_agents:
+        print(f"   키워드 매칭으로 발견된 에이전트들: {found_agents}")
+        # 여러 에이전트가 발견된 경우 첫 번째 선택 (기존 로직 유지)
+        print(f"   ✅ 키워드 매칭으로 선택: {found_agents[0]}")
+        return found_agents[0]
+    
+    # 3. 백업: 키워드 기반 매칭
     if any(keyword in response_lower for keyword in ["축구", "풋살", "킥", "골"]):
+        print(f"   ✅ 백업 키워드 매칭으로 선택: 축구_에이전트")
         return "축구_에이전트"
     elif any(keyword in response_lower for keyword in ["농구", "농구장", "슛", "3점"]):
+        print(f"   ✅ 백업 키워드 매칭으로 선택: 농구_에이전트")
         return "농구_에이전트"
     elif any(keyword in response_lower for keyword in ["야구", "배팅", "타격", "홈런"]):
+        print(f"   ✅ 백업 키워드 매칭으로 선택: 야구_에이전트")
         return "야구_에이전트"
     elif any(keyword in response_lower for keyword in ["테니스", "라켓", "서브", "코트"]):
+        print(f"   ✅ 백업 키워드 매칭으로 선택: 테니스_에이전트")
         return "테니스_에이전트"
     
-    # 기본값
+    # 4. 기본값
+    print(f"   ✅ 기본값으로 선택: 축구_에이전트")
     return "축구_에이전트"
 
 

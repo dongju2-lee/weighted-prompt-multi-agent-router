@@ -69,7 +69,7 @@ async def sports_agent_route(request: QueryRequest):
         
         if result.get("success"):
             return QueryResponse(
-                success=True,
+            success=True,
                 user_query=user_query,
                 selected_agent=result["selected_agent"],
                 agent_response=result["agent_response"],
@@ -105,4 +105,4 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8000,
         log_level="info"
-    ) 
+    )

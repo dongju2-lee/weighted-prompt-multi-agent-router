@@ -39,9 +39,9 @@ def get_default_agent_weights() -> Dict[str, float]:
     """
     return {
         "축구_에이전트": 1.0,
-        "농구_에이전트": 1.0,
+        "농구_에이전트": 0.0,
         "야구_에이전트": 1.0,
-        "테니스_에이전트": 1.2
+        "테니스_에이전트": 0.0
     }
 
 def apply_weights_and_normalize(base_ratios: Dict[str, float], weights: Dict[str, float]) -> Dict[str, float]:

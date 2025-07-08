@@ -83,6 +83,9 @@ async def run_sports_agent_workflow(user_query: str):
         
         # 워크플로우 실행
         result = await app.ainvoke(initial_state)
+        print("--------------------------------")
+        print(result)
+        print("--------------------------------")
         
         return {
             "success": True,
